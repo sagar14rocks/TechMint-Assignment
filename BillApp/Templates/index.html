@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bill Split</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<div class="form-container">
+    <h1>Bill Split</h1>
+    <form id="initial-form">
+        <label for="expense_name">Expense Name:</label>
+        <input type="text" id="expense_name" name="expense_name" required><br>
+
+        <label for="no_of_persons">Number of Persons:</label>
+        <input type="number" id="no_of_persons" name="no_of_persons" required><br>
+
+        <button type="button" onclick="generatePersonForms()">Submit</button>
+    </form>
+
+    <form id="person-form" method="post" style="display:none;">
+        {% csrf_token %}
+        <div id="persons"></div>
+
+        <button type="submit">Submit All Data</button>
+    </form>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    document.getElementById('person-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('{% url "create_expense" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            if(data.status === 'success') {
+                displayResult(data.bill_split);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    });
+
+    function generatePersonForms() {
+        const noOfPersons = document.getElementById('no_of_persons').value;
+        const expenseName = document.getElementById('expense_name').value;
+        const personsDiv = document.getElementById('persons');
+        
+        personsDiv.innerHTML = "";
+
+        for(let i=1; i <= noOfPersons; i++) {
+            personsDiv.innerHTML += `
+                <h2>Person ${i}</h2>
+                <label for="name${i}">Name:</label>
+                <input type="text" id="name${i}" name="name${i}" value="Person ${i}" required><br>
+                
+                <label for="email${i}">Email:</label>
+                <input type="email" id="email${i}" name="email${i}" required><br>
+                
+                <label for="phone${i}">Phone Number:</label>
+                <input type="text" id="phone${i}" name="phone${i}" required><br>
+
+                <label for="expense${i}">Expense:</label>
+                <input type="number" id="expense${i}" name="expense${i}" value=0 required><br>
+
+                <label for="expense_name${i}">Expense Name:</label>
+                <input type="text" id="expense_name${i}" name="expense_name${i}" ><br>
+            `;
+        }
+        
+        personsDiv.innerHTML += `
+            <input type="hidden" id="final_expense_name" name="final_expense_name" value="${expenseName}">
+            <input type="hidden" id="final_no_of_persons" name="final_no_of_persons" value="${noOfPersons}">
+        `;
+
+        document.getElementById('person-form').style.display = 'block';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function displayResult(billSplit) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = '<h2>Final Split</h2>';
+
+        billSplit.forEach(person => {
+            resultDiv.innerHTML += `<p>${person.participant_name} owes ${person.owed_amount}</p>`;
+        });
+    }
+</script>
+</body>
+</html>
