@@ -5,6 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .forms import ParticipantForm, ExpenseForm
 from .models import Participant, Expense, ExpenseParticipant
+from django.core.mail import send_mail
+from django.db.models import Sum
 
 def index(request):
     return render(request, 'index.html')
@@ -71,3 +73,30 @@ def create_expense(request):
         }, status=200)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+@api_view(['GET'])
+def get_passbook(request, participant_id):
+    try:
+        participant = Participant.objects.get(id=participant_id)
+    except Participant.DoesNotExist as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    
+    expense_participants = ExpenseParticipant.objects.filter(participant=participant)
+    
+    total_owe = expense_participants.aggregate(Sum('owed_amount'))['owed_amount__sum'] or 0
+
+    expenses_detail = []
+    for ep in expense_participants:
+        expenses_detail.append({
+            'expense_description': ep.expense.description,
+            'expense_amount': str(ep.expense.amount),
+            'owed_amount': str(ep.owed_amount),
+        })
+    
+    passbook = {
+        'participant_name': participant.name,
+        'total_owe': str(total_owe),
+        'expenses_detail': expenses_detail,
+    }
+
+    return JsonResponse({"status": "error", "data": passbook}, status=200)

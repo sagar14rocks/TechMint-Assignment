@@ -126,3 +126,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.aol.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'testmail143@aol.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = '_uDa&4J2LJG9uk/'
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'send_weekly_summary': {
+        'task': 'BillApp.tasks.send_weekly_expense_summary',
+        'schedule': crontab(day_of_week='sun'),  # Execute every Sunday
+    },
+}

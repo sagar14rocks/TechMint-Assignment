@@ -4,3 +4,5 @@ Markdown
 coreapi
 gunicorn
 PyYAML
+celery[redis]
+redis
