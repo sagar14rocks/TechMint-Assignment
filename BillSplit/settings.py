@@ -132,7 +132,7 @@ EMAIL_HOST = 'smtp.aol.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'testmail143@aol.com'  # Your Gmail address
-EMAIL_HOST_PASSWORD = '_uDa&4J2LJG9uk/'
+EMAIL_HOST_PASSWORD = ''
 
 from celery.schedules import crontab
 
